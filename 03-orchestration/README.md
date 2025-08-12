@@ -1,94 +1,126 @@
 # 3. Orchestration and ML Pipelines
 
-**Note:** [`orchestration.py`](orchestration.py) is a ready final version. The rest of the files were worked on together during the video tutorials.
+## 3.1 Introduction to ML Pipelines
 
-**Note** With Prefect version [`2.2.1`](https://github.com/PrefectHQ/prefect/blob/orion/RELEASE-NOTES.md#20b8) or later `DeploymentSpec`'s are now just `Deployment`'s.
-
-## 3.1 Negative engineering and workflow orchestration
-
-<a href="https://www.youtube.com/watch?v=eKzCjNXoCTc&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK">
-  <img src="images/thumbnail-3-01.jpg">
+<a href="https://www.youtube.com/watch?v=uAR4BhVCNbI&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK">
+  <img src="https://markdown-videos-api.jorgenkh.no/youtube/uAR4BhVCNbI">
 </a>
 
+## 3.2 Turning the Notebook into a Python Script
 
-
-## 3.2 Introduction to Prefect 2.0
-
-<a href="https://www.youtube.com/watch?v=Yb6NJwI7bXw&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK">
-  <img src="images/thumbnail-3-02.jpg">
+<a href="https://www.youtube.com/watch?v=3_Uu0rInxWI&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK">
+  <img src="https://markdown-videos-api.jorgenkh.no/youtube/3_Uu0rInxWI">
 </a>
 
+## 3.3 Using an Orchestrator
+
+Now that we converted the notebook into a python script, we 
+can use an orchestrator to turn the script into a production
+pipeline.
+
+There's no video for this unit, but you can use ChatGPT to help you with this.
+
+### Step 1: Choosing the Tool
+
+For that you first need to choose an orchestrator. For example:
+
+- Airflow
+- Prefect
+- Dagster
+- Kestra
+- Mage
+- or some other tool
+
+### Step 2: Running the Tool
+
+* Configure the tool to run locally 
+* Run the simplest "hello world" workflow 
+
+### Step 3: Orchestrating the Workflow
+
+* Get the code from the previous unit (see [code](code/))
+* Use the tool to orchestrate the steps in the pipeline
+
+### Step 4: Parametrizing the Workflow
+
+* Schedule the workflow to run monthly
+* The train data should be from two months ago
+* The validation data - one month ago
+
+### Step 5: Backfilling
+
+* Learn to run the workflow for some of the past months
+
+### Step 6: Deployment (optional)
+
+* Learn to deploy the tool to the cloud 
+
+### Resources 
+
+For guidance, you can refer to past cohorts of the course:
+
+- Prefect - 2022 and 2023
+- Mage - 2024
+
+You can also rely on ChatGPT or similar tools. They are very helpful.
+
+## 3.4 Homework
+
+More information [here](../cohorts/2025/03-orchestration/homework.md).
 
 
-## 3.3 First Prefect flow and basics
+## Resources
 
-<a href="https://www.youtube.com/watch?v=MCFpURG506w&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK">
-  <img src="images/thumbnail-3-03.jpg">
-</a>
+### Mlflow
 
+If you want to run MLFlow with Docker, you can do this:
 
+Create a dockerfile for mlflow, e.g. `mlflow.dockerfile`:
 
-## 3.4 Remote Prefect Orion deployment
+```dockerfile
+FROM python:3.10-slim
 
-<a href="https://www.youtube.com/watch?v=ComkSIAB0k4&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK">
-  <img src="images/thumbnail-3-04.jpg">
-</a>
+RUN pip install mlflow==2.12.1
 
+EXPOSE 5000
 
-
-## 3.5 Deployment of Prefect flow
-
-**Note:** There are several changes to deployment in Prefect 2.3.1 since 2.0b8:
-- `DeploymentSpec` in 2.0b8 now becomes `Deployment`. 
-- `work_queue_name` is used instead of `tags` to submit the deployment to the a specific work queue. 
-- You don't need to create a work queue before using the work queue. A work queue will be created if it doesn't exist. 
-
-```python
-from prefect.deployments import Deployment
-from prefect.orion.schemas.schedules import IntervalSchedule
-from datetime import timedelta
-
-deployment = Deployment.build_from_flow(
-    flow=main,
-    name="model_training",
-    schedule=IntervalSchedule(interval=timedelta(minutes=5)),
-    work_queue_name="ml"
-)
-
-deployment.apply()
+CMD [ \
+    "mlflow", "server", \
+    "--backend-store-uri", "sqlite:///home/mlflow_data/mlflow.db", \
+    "--host", "0.0.0.0", \
+    "--port", "5000" \
+]
 ```
 
-<a href="https://www.youtube.com/watch?v=xw9JfaWPPps&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK">
-  <img src="images/thumbnail-3-05.jpg">
-</a>
+Add it to the docker-compose.yaml:
 
-Links:
+```yaml
+  mlflow:
+    build:
+      context: .
+      dockerfile: mlflow.dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - "${PWD}/mlflow_data:/home/mlflow_data/"
+```
 
-* [Instructions for Hosting Prefect Orion](https://discourse.prefect.io/t/hosting-an-orion-instance-on-a-cloud-vm/967)
+In your code, make sure you use the same version of mlflow (`mlflow==2.12.1`).
 
-
-## 3.6 MLOps Zoomcamp 3.6 - (Optional) Work queues and agents
-
-<a href="https://www.youtube.com/watch?v=oDSf0ThKsso&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK">
-  <img src="images/thumbnail-3-06.jpg">
-</a>
-
-
-## 3.7 Homework
-
-More information here: TBD
-
+When you run it, mlflow should be accessible at `http://mlflow:5000`.
 
 ## Notes
 
+### Notes previous editions
+
+- [2022 Prefect notes](../cohorts/2022/03-orchestration/README.md)
+- [2023 Prefect notes](../cohorts/2023/03-orchestration/prefect/README.md)
+- [2024 Mage notes](../cohorts/2024/03-orchestration/README.md)
+
+### Notes 2025
+
 Did you take notes? Add them here:
 
-* [Week 3, Prefect Introduction and S3 Bucket configuration with Prefect by M. Ayoub C.](https://gist.github.com/Qfl3x/8dd69b8173f027b9468016c118f3b6a5)
-* [Notes from froukje](https://github.com/froukje/ml-ops-zoomcamp/blob/master/03-orchestration/week03_orchestration.ipynb)
-* [Minimalist code notes from Anna V](https://github.com/annnvv/mlops_zoomcamp/blob/main/notes/module3_notes_prefect.md)
-* [Getting Started on Prefect 2.0 + Deploying worfklows for MLflow Staging by Ron Medina (Jupyter Book)](https://particle1331.github.io/inefficient-networks/notebooks/mlops/3-prefect/3-prefect.html)
-* [Quickstart your homework by Zioalex](https://github.com/zioalex/mlops-zoomcamp/blob/week3/03-orchestration/homework_quickstart.md)
-* [Notes from Maxime M](https://github.com/maxmarkov/mlops-zoomcamp/blob/master/lecture-notes/WEEK-3/03-orchestration.md)
-* [Week3: Prefect introduction and homework notes by Bhagabat](https://github.com/BPrasad123/MLOps_Zoomcamp/tree/main/Week3)
-* [Week 3: Orchestration notes by Ayoub.B](https://github.com/ayoub-berdeddouch/mlops-journey/blob/main/orchestration-03.md)
+* [2025 Cohort | Running Airflow + MLflow using Docker by André Calatré](https://github.com/calatre/mlops-zoomcamp/tree/main/03-orchestration)
+* [Week 3 - workflow orchestration & Prefect by hannarud](https://github.com/hannarud/mlops-zoomcamp-2025/blob/main/week3_notes.md)
 * Send a PR, add your notes above this line
